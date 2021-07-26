@@ -7,7 +7,8 @@ project( cellworld_vr
         DESCRIPTION "Cellworld vr utilities"
         LANGUAGES CXX)
 
-find_package(Cellworld REQUIRED)
+find_package(Cellworld_tools REQUIRED)
+find_package(Easy-tcp REQUIRED)
 find_package(Threads)
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread")
@@ -19,9 +20,7 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread")
 set(cellworld_vr_files
         src/location3.cpp
         src/rotation3.cpp
-        src/state.cpp
-        src/net/tcp_server.cpp
-        src/net/client.cpp)
+        src/state.cpp )
 
 add_library(cellworld_vr ${cellworld_vr_files})
 
@@ -49,7 +48,8 @@ target_include_directories(cellworld_vr
 
 target_link_libraries( cellworld_vr
         PUBLIC
-        ${CELLWORLD_LIBRARIES})
+        ${CELLWORLD_TOOLS_LIBRARIES}
+        easy-tcp)
 
 
 ###
@@ -61,6 +61,8 @@ include_directories( include )
 add_executable(cellworld_server src/server.cpp)
 target_link_libraries( cellworld_server PUBLIC cellworld_vr )
 
+add_executable(cellworld_client src/client.cpp)
+target_link_libraries( cellworld_client PUBLIC cellworld_vr )
 
 ###
 ### TESTS

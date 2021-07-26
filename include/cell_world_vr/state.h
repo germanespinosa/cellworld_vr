@@ -18,6 +18,7 @@ namespace cell_world::vr {
     using State_vector = json_cpp::Json_vector<double>;
 
     struct State : json_cpp::Json_object {
+        State(){};
         State (const State_vector &);
         Json_object_members(
                 Add_member(episode);
