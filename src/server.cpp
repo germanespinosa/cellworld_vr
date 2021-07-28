@@ -1,3 +1,4 @@
+#include <strstream>
 #include <iostream>
 #include <cell_world_tools.h>
 #include <cell_world_vr.h>
@@ -16,17 +17,15 @@ struct Data{
     cells(world.create_cell_group()),
     map(cells),
     graph(world.create_graph()),
-    paths(world.create_paths(
-            Json_create<Path_builder>(
-                    Web_resource::from("paths").key(world.name).key("astar").get()
-            )
-    )){
+    pb(Json_create<Path_builder>(Web_resource::from("paths").key(world.name).key("astar").get())),
+    paths(world.create_paths(pb)){
 
     }
     World world;
     Cell_group cells;
     Map map;
     Graph graph;
+    Path_builder pb;
     Paths paths;
 } ;
 
@@ -127,6 +126,14 @@ struct Experiment_service : Service {
 
 int main(int argc, char *argv[])
 {
+//    auto &wr = Web_resource::from("paths").key("hexa_10_05_vr").key("astar").get();
+//
+//    string s;
+//    stringstream ss (s);
+//    ss << wr;
+//    cout << s;
+
+    Data data("hexa_10_05_vr");
     if (argc != 2) {
         cout << "Wrong parameter." << endl;
         cout << "Usage: ./tcp_server [Port]" << endl;

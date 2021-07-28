@@ -18,14 +18,17 @@ int main(int argc, char *argv[])
     auto connection = Connection::connect_remote("127.0.0.1",port);
 
     Message msg;
-    msg.command = "update_experiment_state";
-    msg.content = "[1,2,3,4,5,6,7,8,9,0,1,2,3]";
-    while(1) {
+    msg.command = "get_cell";
+
+    for (int i=0; i<331; i++) {
+        msg.content << Json_wrap_object(i);
         string m;
         m << msg;
         cout << m <<  endl;
         connection.send_data(m.c_str(),m.size());
         usleep(10000);
+        while (!connection.receive_data());
+        cout << connection.buffer << endl;
     }
 
     return 0;

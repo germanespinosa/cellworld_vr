@@ -6,29 +6,65 @@
 using namespace std;
 using namespace json_cpp;
 using namespace cell_world;
-
-
-struct Data{
-    Data (const std::string &world_name):
-            world(Json_create<World>(Web_resource::from("world").key(world_name).get())),
-            cells(world.create_cell_group()),
-            map(cells),
-            graph(world.create_graph()),
-            paths(world.create_paths(
-                    Json_create<Path_builder>(
-                            Web_resource::from("paths").key(world.name).key("astar").get()
-                    )
-            )){
-
-    }
-    World world;
-    Cell_group cells;
-    Map map;
-    Graph graph;
-    Paths paths;
-} ;
+# define M_PI           3.14159265358979323846
 
 TEST_CASE("location"){
-    Data data("hexa_10_05_vr");
-    cout << " dist " << data.map[Coordinates{-20,0}].location.dist(data.map[Coordinates{-18,0}].location) << endl;
+    std::string world_name("hexa_10_05_vr");
+    World world(Json_create<World>(Web_resource::from("world").key(world_name).get()));
+    Cell_group cells(world.create_cell_group());
+    Map map(cells);
+    Location start_vertex{2149,790};
+    Location end_vertex{427,1775};
+
+    cout << "start_vertex: " << start_vertex << endl;
+    cout << "end_vertex: " << end_vertex << endl;
+    cout << "mid: " << (end_vertex+start_vertex) * .5 << endl ;
+    double distance = end_vertex.dist(start_vertex);
+    cout << "total distance : " << distance << endl;
+    cout << "x change R: " << (end_vertex - start_vertex) * (1.0/48.0);
+    cout << endl << endl;
+
+    double intercell_distance = distance / (21.0 + 1.0/3.0);
+    double col_distance = intercell_distance / 2;
+    double row_distance = sqrt( intercell_distance * intercell_distance - intercell_distance * intercell_distance / 4 );
+    double side  = row_distance / 1.5;
+    double padding = intercell_distance / 6;
+    cout << "inter cell distance: " << intercell_distance << endl;
+    cout << "side: " << side << " " << side/intercell_distance << endl;
+    cout << "padding: "<<  padding  << " " << padding / side << " " << padding / intercell_distance << " " << distance/padding << endl;
+    cout << endl << endl;
+
+    Location v = end_vertex - start_vertex;
+    double theta = atan2(v.y, v.x);
+    Location xChange = Location{cos(theta),sin(theta)} * col_distance;
+    cout << "xChange: " << xChange << endl;
+    double thetay = theta - M_PI / 2.0;
+    Location yChange = Location{cos(thetay),sin(thetay)} * row_distance;
+    cout << "yChange: " << yChange << endl;
+    cout << endl << endl;
+
+    Location origin = (end_vertex + start_vertex) * .5;
+    cout << "end_vertex: " << end_vertex << " == " << start_vertex + Location{cos(theta),sin(theta)} * distance
+            << " == " << start_vertex + Location{cos(theta),sin(theta)} * (2 * padding + 21 * intercell_distance) << endl;
+    cout << "origin: " << origin << " == " << start_vertex + Location{cos(theta),sin(theta)} * (10.5 * intercell_distance + padding) << endl;
+    cout << endl << endl;
+
+
+    Location start_cell_location = start_vertex +  Location{cos(theta),sin(theta)} * (padding + col_distance);
+    cout << "start_cell_location: " << start_cell_location << endl;
+
+    for (int x = -20;x <= 20; x++)
+        for (int y = -10;y <= 10; y++){
+            if (abs(x) + abs(y) <= 20 && (abs(x) + abs(y)) % 2 == 0){
+                Coordinates coord (x,y);
+                Location loc = origin + xChange * (double)x + yChange * (double)y;
+                world.cells[map[coord].id].location = loc;
+                cout << loc.x << "," << loc.y << "," << "#" << coord.x << "#"  << coord.y << endl;
+            }
+        }
+
+    cout << "origin calculated: " << map[Coordinates{0,0}].location << endl;
+    cout << "vertex distance: " << map[Coordinates{-20,0}].location.dist(map[Coordinates{20,0}].location) << endl;
+    cout << "vertex distance: " << map[Coordinates{-10,-10}].location.dist(map[Coordinates{10,10}].location) << endl;
+    cout << "vertex distance: " << map[Coordinates{-10,10}].location.dist(map[Coordinates{10,-10}].location) << endl;
 }
