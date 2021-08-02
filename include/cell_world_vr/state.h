@@ -10,23 +10,23 @@ namespace cell_world::vr {
         Json_object_members(
                 Add_member(location);
                 Add_member(rotation);
+                Add_member(cell);
                 );
         Location3 location;
         Rotation3 rotation;
+        Cell cell;
     };
 
     using State_vector = json_cpp::Json_vector<double>;
 
     struct State : json_cpp::Json_object {
         State(){};
-        State (const State_vector &);
+        void update (const State_vector &);
         Json_object_members(
-                Add_member(episode);
                 Add_member(time_stamp);
                 Add_member(predator);
                 Add_member(prey);
         );
-        unsigned int episode;
         double time_stamp;
         Agent_state predator;
         Agent_state prey;

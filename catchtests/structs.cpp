@@ -16,6 +16,7 @@ TEST_CASE("location"){
     Location start_vertex{2149,790};
     Location end_vertex{427,1775};
 
+    cout << endl << endl;
     cout << "start_vertex: " << start_vertex << endl;
     cout << "end_vertex: " << end_vertex << endl;
     cout << "mid: " << (end_vertex+start_vertex) * .5 << endl ;
@@ -36,10 +37,12 @@ TEST_CASE("location"){
 
     Location v = end_vertex - start_vertex;
     double theta = atan2(v.y, v.x);
-    Location xChange = Location{cos(theta),sin(theta)} * col_distance;
+    Location xVector = Location{cos(theta),sin(theta)};
+    Location xChange = xVector * col_distance;
     cout << "xChange: " << xChange << endl;
     double thetay = theta - M_PI / 2.0;
-    Location yChange = Location{cos(thetay),sin(thetay)} * row_distance;
+    Location yVector = Location{cos(thetay),sin(thetay)};
+    Location yChange = yVector * row_distance;
     cout << "yChange: " << yChange << endl;
     cout << endl << endl;
 
@@ -67,4 +70,57 @@ TEST_CASE("location"){
     cout << "vertex distance: " << map[Coordinates{-20,0}].location.dist(map[Coordinates{20,0}].location) << endl;
     cout << "vertex distance: " << map[Coordinates{-10,-10}].location.dist(map[Coordinates{10,10}].location) << endl;
     cout << "vertex distance: " << map[Coordinates{-10,10}].location.dist(map[Coordinates{10,-10}].location) << endl;
+
+    cout << endl << endl;
+    cout << "(-20,  0): " << map[Coordinates{20,0}].location << "( 20,  0): " << map[Coordinates{20,0}].location << endl;
+    cout << "(-10,-10): " << map[Coordinates{-10,-10}].location << "(-10,-10): " << map[Coordinates{10,10}].location << endl;
+    cout << "(-10, 10): " << map[Coordinates{-10,10}].location << "( 10,-10): " << map[Coordinates{ 10,-10}].location << endl;
+
+    cout << endl << endl;
+    cout << "vertex1: " << map[Coordinates{-20,0}].location << endl;
+    cout << "vertex2: " << map[Coordinates{-10,10}].location << endl;
+    cout << "vertex3: " << map[Coordinates{10,10}].location << endl;
+    cout << "vertex4: " << map[Coordinates{20,0}].location << endl;
+    cout << "vertex5: " << map[Coordinates{10,-10}].location << endl;
+    cout << "vertex6: " << map[Coordinates{-10,-10}].location<< endl;
+
+    cout << endl << endl;
+
+    Location vertex[6] = { start_vertex ,
+                           Location {start_vertex.x,end_vertex.y},
+                           ((start_vertex + end_vertex) *.5 ) + Location{0, end_vertex.y - start_vertex.y},
+                           end_vertex,
+                           Location {end_vertex.x,start_vertex.y},
+                           ((start_vertex + end_vertex) *.5 ) + Location{0, start_vertex.y - end_vertex.y }};
+
+    cout << "corner1: " << vertex[0] << endl;
+    cout << "corner2: " << vertex[1] << endl;
+    cout << "corner3: " << vertex[2] << endl;
+    cout << "corner4: " << vertex[3] << endl;
+    cout << "corner5: " << vertex[4] << endl;
+    cout << "corner6: " << vertex[5] << endl;
+
+    cout << endl << endl;
+
+    cout << "center: " << (vertex[0]+vertex[3]) *.5 << endl;
+
+    cout << endl << endl;
+
+
+    cout << "dist: " << vertex[2].x - vertex[0].x << endl;
+
+
+}
+
+const std::string format_time(string format) {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[256];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), format.c_str(), &tstruct);
+    return buf;
+}
+
+TEST_CASE("filename") {
+    cout << format_time("%Y%m%d%H%M%S.log") << endl;
 }
