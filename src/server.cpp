@@ -18,9 +18,7 @@ struct Data{
     map(cells),
     graph(world.create_graph()),
     pb(Json_create<Path_builder>(Web_resource::from("paths").key(world.name).key("astar").get())),
-    paths(world.create_paths(pb)){
-
-    }
+    paths(world.create_paths(pb)){}
     World world;
     Cell_group cells;
     Map map;
