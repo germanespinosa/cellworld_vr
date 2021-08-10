@@ -30,5 +30,6 @@ namespace cell_world::vr {
         double time_stamp;
         Agent_state predator;
         Agent_state prey;
+        //unsigned int participant_id;
     };
 }

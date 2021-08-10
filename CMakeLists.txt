@@ -9,6 +9,7 @@ project( cellworld_vr
 
 find_package(Cellworld_tools REQUIRED)
 find_package(Easy-tcp REQUIRED)
+find_package(date REQUIRED)
 find_package(Threads)
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread")
@@ -20,7 +21,11 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread")
 set(cellworld_vr_files
         src/location3.cpp
         src/rotation3.cpp
-        src/state.cpp )
+        src/state.cpp
+        src/world_conversion.cpp
+        src/vr_episode.cpp
+        src/vr_experiment.cpp
+        src/vr_service.cpp)
 
 add_library(cellworld_vr ${cellworld_vr_files})
 

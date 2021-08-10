@@ -1,11 +1,15 @@
-#include<catch.h>
+#include <catch.h>
 #include <cell_world.h>
 #include <cell_world_tools.h>
 #include <cell_world_vr.h>
+#include <date/date.h>
+#include <cstring>
+#include <filesystem>
 
 using namespace std;
 using namespace json_cpp;
 using namespace cell_world;
+using namespace cell_world::vr;
 # define M_PI           3.14159265358979323846
 
 TEST_CASE("location"){
@@ -109,18 +113,48 @@ TEST_CASE("location"){
 
     cout << "dist: " << vertex[2].x - vertex[0].x << endl;
 
+    cout << Json_date::now();
 
 }
 
-const std::string format_time(string format) {
-    time_t     now = time(0);
-    struct tm  tstruct;
-    char       buf[256];
-    tstruct = *localtime(&now);
-    strftime(buf, sizeof(buf), format.c_str(), &tstruct);
-    return buf;
-}
+namespace fs = std::filesystem;
 
-TEST_CASE("filename") {
-    cout << format_time("%Y%m%d%H%M%S.log") << endl;
+
+TEST_CASE("conversion"){
+    World_conversion wc ({2149,790}, {427,1775}, {1,.5}, {0,.5});
+    std::string path = "/mnt/c/experiment/dependencies/cellworld_vr/cmake-build-debug/Logs";
+    Experiment experiment;
+    experiment.duration = 1200;
+    experiment.name = "MassVRWalkThrough";
+    for (const auto & entry : fs::directory_iterator(path)) {
+        std::ifstream t(entry.path());
+        std::stringstream buffer;
+        buffer << t.rdbuf();
+        string json = buffer.str();
+        if (json[json.size() - 3] == ',')  json[json.size() - 3] = ' ';
+        json_cpp::Json_vector<State> steps;
+        json >> steps;
+        auto &episode = experiment.episodes.emplace_back();
+
+        episode.start_time = Json_date::now();
+        unsigned int i = 0;
+        for (auto &a:steps) {
+            Episode_data_point prey_edp;
+            prey_edp.location = wc.convert(a.prey.location.to_location());
+            prey_edp.coordinates = a.prey.cell.coordinates;
+            prey_edp.agent_name = "human";
+            prey_edp.time_stamp = a.time_stamp;
+            prey_edp.frame = i;
+            episode.trajectories.push_back(prey_edp);
+
+            Episode_data_point predator_edp;
+            predator_edp.location = wc.convert(a.predator.location.to_location());
+            predator_edp.coordinates = a.predator.cell.coordinates;
+            predator_edp.agent_name = "ghost";
+            predator_edp.time_stamp = a.time_stamp;
+            predator_edp.frame = i++;
+            episode.trajectories.push_back(predator_edp);
+        }
+    }
+    experiment.save("GabbiesRun_good2.json");
 }
