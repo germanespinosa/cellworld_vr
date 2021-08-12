@@ -122,11 +122,12 @@ namespace fs = std::filesystem;
 
 TEST_CASE("conversion"){
     World_conversion wc ({2149,790}, {427,1775}, {1,.5}, {0,.5});
-    std::string path = "/mnt/c/experiment/dependencies/cellworld_vr/cmake-build-debug/Logs";
+    std::string path = "/mnt/e/MacIver-MassVr/Logs/Experiment_blah/Participant_3";
     Experiment experiment;
     experiment.duration = 1200;
     experiment.name = "MassVRWalkThrough";
     for (const auto & entry : fs::directory_iterator(path)) {
+        cout << "Processing " << entry << endl;
         std::ifstream t(entry.path());
         std::stringstream buffer;
         buffer << t.rdbuf();
@@ -156,5 +157,5 @@ TEST_CASE("conversion"){
             episode.trajectories.push_back(predator_edp);
         }
     }
-    experiment.save("GabbiesRun_good2.json");
+    experiment.save("Participant_3.json");
 }

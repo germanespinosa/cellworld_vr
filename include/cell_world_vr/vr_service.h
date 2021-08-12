@@ -8,7 +8,7 @@ namespace cell_world::vr {
     struct Vr_service : easy_tcp::Service {
         Cell get_cell(Location l);
         void on_connect() override;
-        void create_new_log_file();
+        void create_new_log_file(const std::string &);
         void on_incoming_data(const std::string &plugin_data) override;
         void on_disconnect() override;
 

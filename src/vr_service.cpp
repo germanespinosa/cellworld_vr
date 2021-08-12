@@ -66,8 +66,8 @@ namespace cell_world::vr {
         return buf;
     }
 
-    void Vr_service::create_new_log_file(){
-        string file_name = format_time("%Y%m%d%H%M%S.log");
+    void Vr_service::create_new_log_file(const std::string &participant_id){
+        string file_name = participant_id + "_" + format_time("%Y%m%d%H%M%S.log");
         log_file.open (file_name);
     }
 
@@ -75,17 +75,23 @@ namespace cell_world::vr {
         cout << "Request:" << plugin_data << endl;
         Message request;
         Message response;
-        plugin_data >> request ;
+        try {
+            plugin_data >> request;
+        } catch (...) {
+            return;
+        }
         if (request.command == "start_episode") {
             response.command = "set_speed";
             response.content << Json_object_wrapper(speed);
             send_data(response.to_json());
-            create_new_log_file();
+            create_new_log_file(request.content);
             log_file << "[";
         }
         if (request.command == "get_spawn_cell") {
             response.command = "set_spawn_cell";
-            response.content << Json_object_wrapper(data->cells.free_cells().random_cell().id);
+            auto spawn_cell_id = data->cells.free_cells().random_cell().id;
+            cout << "new spawn cell " << spawn_cell_id << endl ;
+            response.content << Json_object_wrapper(spawn_cell_id);
             send_data(response.to_json());
         }
         if (request.command == "end_episode") {
