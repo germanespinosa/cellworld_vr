@@ -1,6 +1,7 @@
 #include <cell_world_vr/vr_service.h>
 #include <cell_world_vr/message.h>
 #include <cell_world_tools.h>
+#include <filesystem>
 
 using namespace json_cpp;
 using namespace std;
@@ -20,16 +21,22 @@ namespace cell_world::vr {
         cells(world.create_cell_group()),
         map(cells),
         graph(world.create_graph()),
+        visibility(world.create_graph(Json_create<Graph_builder>(Web_resource::from("graph").key(world_name).key("visibility").get()))),
+        invert_visibility(Visibility::invert(visibility)),
         paths(world.create_paths(Json_create<Path_builder>(Web_resource::from("paths").key(world.name).key("astar").get()))){}
         World world;
         Cell_group cells;
         Map map;
         Graph graph;
+        Graph visibility;
+        Graph invert_visibility;
         Paths paths;
     };
 
     Data *data = nullptr;
     double speed = 0;
+    string destination_folder;
+    string experiment_name;
 
     Cell Vr_service::get_cell(Location l){
         double min_dis=l.dist(data->cells[0].location);
@@ -48,7 +55,14 @@ namespace cell_world::vr {
     void Vr_service::update_agents_coordinates(){
         state.predator.cell = get_cell(state.predator.location.to_location());
         state.prey.cell =  get_cell(state.prey.location.to_location());
-        auto move = data->paths.get_move(state.predator.cell,state.prey.cell);
+        if (data->visibility[state.predator.cell].contains(state.prey.cell)) {
+            destination = state.prey.cell;
+        } else {
+            if (destination == Cell::ghost_cell() || destination == state.predator.cell) {
+                destination = data->invert_visibility[state.predator.cell].random_cell();
+            }
+        }
+        auto move = data->paths.get_move(state.predator.cell,destination);
         auto destination_coordinates = state.predator.cell.coordinates + move;
         predator_destination = data->map[destination_coordinates];
     }
@@ -57,7 +71,7 @@ namespace cell_world::vr {
         cout << "new client connected "<< endl;
     }
 
-    const std::string format_time(string format) {
+    std::string Vr_service::format_time(const string &format) {
         time_t     now = time(0);
         struct tm  tstruct;
         char       buf[256];
@@ -66,8 +80,14 @@ namespace cell_world::vr {
         return buf;
     }
 
-    void Vr_service::create_new_log_file(const std::string &participant_id){
-        string file_name = participant_id + "_" + format_time("%Y%m%d%H%M%S.log");
+    void Vr_service::create_new_log_file(const std::string &participant){
+        participant_id = participant;
+        string folder = destination_folder + "/"+ experiment_name + "/" + data->world.name + "/P" + participant_id;
+        filesystem::create_directory(destination_folder);
+        filesystem::create_directory(destination_folder + "/"+ experiment_name);
+        filesystem::create_directory(destination_folder + "/"+ experiment_name + "/" + data->world.name);
+        filesystem::create_directory(folder);
+        file_name = folder + "/" + format_time("%Y%m%d%H%M%S.log");
         log_file.open (file_name);
     }
 
@@ -78,13 +98,14 @@ namespace cell_world::vr {
         try {
             plugin_data >> request;
         } catch (...) {
-            return;
+            return; // ignores malformed messages
         }
         if (request.command == "start_episode") {
             response.command = "set_speed";
             response.content << Json_object_wrapper(speed);
             send_data(response.to_json());
             create_new_log_file(request.content);
+            record_count = 0;
             log_file << "[";
         }
         if (request.command == "get_spawn_cell") {
@@ -103,7 +124,8 @@ namespace cell_world::vr {
             request.content >> game_state_vector;
             state.update(game_state_vector);
             update_agents_coordinates();
-            log_file << state << "," << endl;
+            if (record_count++) log_file << ",";
+            log_file << state << endl;
             if (state.predator.cell == state.prey.cell) {
                 response.command = "set_prey_caught";
                 response.content = "";
@@ -131,8 +153,7 @@ namespace cell_world::vr {
             response.content << data->world[cell_id];
             send_data(response.to_json());
         }
-        if (!response.command.empty())
-            cout << "Response:" << response.to_json() << endl << endl;
+        if (!response.command.empty())  cout << "Response:" << response.to_json() << endl << endl;
     }
 
     void Vr_service::on_disconnect()  {
@@ -146,4 +167,13 @@ namespace cell_world::vr {
     void Vr_service::set_speed(double new_speed) {
         speed = new_speed;
     }
+
+    void  Vr_service::set_destination_folder(const std::string &folder) {
+        destination_folder = folder;
+    }
+
+    void Vr_service::set_experiment(const string &experiment) {
+        experiment_name = experiment;
+    }
+
 }

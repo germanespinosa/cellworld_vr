@@ -10,14 +10,18 @@ using namespace easy_tcp;
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4) {
+    if (argc != 5) {
         cout << "Wrong parameters." << endl;
-        cout << "Usage: ./cellworld_server [Port] [World_name] [speed]" << endl;
+        cout << "Usage: ./cellworld_server [Port] [World_name] [speed] [destination_folder]" << endl;
         exit(1);
     }
-    string world_name (argv[2]);
-    Vr_service::set_world(world_name);
     int port = atoi(argv[1]);
+    string world_name (argv[2]);
+    string destination_folder (argv[4]);
+
+    Vr_service::set_destination_folder(destination_folder);
+    Vr_service::set_experiment(Vr_service::format_time("%Y%m%d_%H%M"));
+    Vr_service::set_world(world_name);
     Vr_service::set_speed(atof(argv[3]));
 
     // start server on port 65123

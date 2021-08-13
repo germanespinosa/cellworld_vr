@@ -16,7 +16,17 @@ namespace cell_world::vr {
         State state;
         Cell predator_destination;
         std::ofstream log_file;
+
+        static std::string format_time(const std::string &format);
+        static void set_destination_folder(const std::string &);
+        static void set_experiment(const std::string &);
         static void set_world(const std::string &);
         static void set_speed(double);
+
+    private:
+        Cell destination = Cell::ghost_cell();
+        std::string participant_id;
+        std::string file_name;
+        unsigned int record_count = 0;
     };
 }

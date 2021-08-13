@@ -66,8 +66,8 @@ include_directories( include )
 add_executable(cellworld_server src/server.cpp)
 target_link_libraries( cellworld_server PUBLIC cellworld_vr )
 
-add_executable(cellworld_client src/client.cpp)
-target_link_libraries( cellworld_client PUBLIC cellworld_vr )
+add_executable(cellworld_convert src/convert_experiment.cpp)
+target_link_libraries( cellworld_convert PUBLIC cellworld_vr )
 
 ###
 ### TESTS
