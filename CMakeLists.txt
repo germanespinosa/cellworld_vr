@@ -69,6 +69,21 @@ target_link_libraries( cellworld_server PUBLIC cellworld_vr )
 add_executable(cellworld_convert src/convert_experiment.cpp)
 target_link_libraries( cellworld_convert PUBLIC cellworld_vr )
 
+add_executable(set_world src/console/set_world.cpp)
+target_link_libraries( set_world PUBLIC cellworld_vr )
+
+add_executable(set_speed src/console/set_speed.cpp)
+target_link_libraries( set_speed PUBLIC cellworld_vr )
+
+add_executable(new_experiment src/console/new_experiment.cpp)
+target_link_libraries( new_experiment PUBLIC cellworld_vr )
+
+add_executable(show_visibility src/console/show_visibility.cpp)
+target_link_libraries( show_visibility PUBLIC cellworld_vr )
+
+add_executable(hide_visibility src/console/hide_visibility.cpp)
+target_link_libraries( hide_visibility PUBLIC cellworld_vr )
+
 ###
 ### TESTS
 ###

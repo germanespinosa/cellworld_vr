@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     string destination_folder (argv[4]);
 
     Vr_service::set_destination_folder(destination_folder);
-    Vr_service::set_experiment(Vr_service::format_time("%Y%m%d_%H%M"));
+    Vr_service::new_experiment();
     Vr_service::set_world(world_name);
     Vr_service::set_speed(atof(argv[3]));
 
