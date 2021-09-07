@@ -24,12 +24,6 @@ namespace cell_world::vr {
         visibility(world.create_graph(Json_create<Graph_builder>(Web_resource::from("graph").key(world_name).key("visibility").get()))),
         invert_visibility(Visibility::invert(visibility)),
         paths(world.create_paths(Json_create<Path_builder>(Web_resource::from("paths").key(world.name).key("astar").get()))){
-            auto start = map[{-20,0}];
-            for (auto &cell : cells){
-                if (!cell.get().occluded && paths.get_steps(start,cell) >= 5) {
-                    spawn_locations.add(cell);
-                }
-            }
         }
         World world;
         Cell_group cells;
@@ -38,7 +32,6 @@ namespace cell_world::vr {
         Graph visibility;
         Graph invert_visibility;
         Paths paths;
-        Cell_group spawn_locations;
     };
 
     Data *data = nullptr;
@@ -46,6 +39,9 @@ namespace cell_world::vr {
     string destination_folder;
     string experiment_name;
     bool show_visibility = false;
+    double view_angle = M_PI;
+    unsigned int min_ghost_distance = 5;
+    Cell_group spawn_locations;
 
     Cell Vr_service::get_cell(Location l){
         double min_dis=l.dist(data->cells[0].location);
@@ -61,13 +57,25 @@ namespace cell_world::vr {
         return data->cells[min_id];
     }
 
+    bool Vr_service::update_spawn_locations (){
+        auto start = data->map[{-20,0}];
+        spawn_locations.clear();
+        for (auto &cell : data->cells){
+            if (!cell.get().occluded && data->paths.get_steps(start,cell) >= (int)min_ghost_distance) {
+                spawn_locations.add(cell);
+            }
+        }
+        if (spawn_locations.empty()) return false;
+        return true;
+    }
+
     bool Vr_service::update_state(const State_vector &game_state_vector){
         auto prey_cell = state.prey.cell;
         auto predator_cell = state.predator.cell;
         state.update(game_state_vector);
         state.predator.cell = get_cell(state.predator.location.to_location());
         state.prey.cell =  get_cell(state.prey.location.to_location());
-        Visibility_cone cone(data->visibility, M_PI / 2);
+        Visibility_cone cone(data->visibility, view_angle / 2);
         visibility_cone = cone.visible_cells(state.predator.cell,Visibility_cone::to_radians(-state.predator.rotation.yaw - 90));
         predator_instruction.contact = visibility_cone.contains(state.prey.cell);
         if (predator_instruction.contact) {
@@ -134,12 +142,17 @@ namespace cell_world::vr {
         }
         if (request.command == "get_spawn_cell") {
             response.command = "set_spawn_cell";
-            auto spawn_cell_id = data->spawn_locations.random_cell().id;
+
+            int spawn_cell_id;
+
+            if (!spawn_locations.empty())
+                spawn_cell_id = spawn_locations.random_cell().id;
+            else
+                spawn_cell_id = data->cells.free_cells().random_cell().id;
+
             cout << "new spawn cell " << spawn_cell_id << endl ;
             response.content << Json_object_wrapper(spawn_cell_id);
             send_data(response.to_json());
-        }
-        if (request.command == "end_episode") {
         }
         if (request.command == "set_game_state"){
             State_vector game_state_vector;
@@ -197,10 +210,19 @@ namespace cell_world::vr {
         }
 
         // console
+        if (request.command == "set_min_ghost_distance"){
+            response.command = "result";
+            if (set_ghost_min_distance(atoi(request.content.c_str()))){
+                response.content = "success";
+            } else {
+                response.content = "failed";
+            }
+            send_data(response.to_json());
+        }
         if (request.command == "new_experiment"){
             response.command = "result";
             if (new_experiment()) {
-                response.content = "success";
+                response.content = "success: " + experiment_name;
             }else{
                 response.content = "fail";
             }
@@ -223,6 +245,15 @@ namespace cell_world::vr {
             if (set_world(request.content)) {
                 response.content = "success";
             }else{
+                response.content = "fail";
+            }
+            send_data(response.to_json());
+        }
+        if (request.command == "set_view_angle"){
+            response.command = "result";
+            if (set_view_angle(Visibility_cone::to_radians(atof(request.content.c_str())))) {
+                response.content = "success";
+            } else {
                 response.content = "fail";
             }
             send_data(response.to_json());
@@ -250,7 +281,7 @@ namespace cell_world::vr {
         } catch (...) {
             return false;
         }
-        return true;
+        return update_spawn_locations();
     }
 
     bool Vr_service::set_speed(double new_speed) {
@@ -258,6 +289,13 @@ namespace cell_world::vr {
         speed = new_speed;
         return true;
     }
+
+    bool Vr_service::set_view_angle(double new_view_angle) {
+        if (view_angle <= 0) return false;
+        view_angle = new_view_angle;
+        return true;
+    }
+
 
     bool  Vr_service::set_destination_folder(const std::string &folder) {
         destination_folder = folder;
@@ -273,4 +311,10 @@ namespace cell_world::vr {
     bool Vr_service::new_experiment() {
         return set_experiment(format_time("%Y%m%d_%H%M"));
     }
+
+    bool Vr_service::set_ghost_min_distance(unsigned int value) {
+        min_ghost_distance = value;
+        return update_spawn_locations();
+    }
+
 }

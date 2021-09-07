@@ -84,6 +84,10 @@ target_link_libraries( show_visibility PUBLIC cellworld_vr )
 add_executable(hide_visibility src/console/hide_visibility.cpp)
 target_link_libraries( hide_visibility PUBLIC cellworld_vr )
 
+add_executable(set_view_angle src/console/set_view_angle.cpp)
+target_link_libraries( set_view_angle PUBLIC cellworld_vr )
+
+
 ###
 ### TESTS
 ###

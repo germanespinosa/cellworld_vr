@@ -35,6 +35,9 @@ namespace cell_world::vr {
         static bool new_experiment();
         static bool set_world(const std::string &);
         static bool set_speed(double);
+        static bool set_view_angle(double);
+        static bool update_spawn_locations();
+        static bool set_ghost_min_distance(unsigned int);
 
     private:
         Predator_instruction predator_instruction;
