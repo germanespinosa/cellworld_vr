@@ -12,16 +12,16 @@ int main(int argc, char *argv[])
 {
     if (argc != 2) {
         cout << "Wrong parameters." << endl;
-        cout << "Usage: ./set_speed [Speed]" << endl;
+        cout << "Usage: ./set_participant_name [Participant_name]" << endl;
         exit(1);
     }
-    string speed (argv[1]);
-    cout << "setting ghost speed to: " << speed << "... " << flush;
+    string participant_name (argv[1]);
+    cout << "setting participant name to: " << participant_name << "... " << flush;
 
     Connection connection = Connection::connect_remote("127.0.0.1", Vr_service::port());
     Message message;
-    message.command = "set_speed";
-    message.content = speed;
+    message.command = "set_participant_name";
+    message.content = participant_name;
     string msg_string;
     msg_string << message;
     connection.send_data(msg_string.c_str(), msg_string.size() + 1);

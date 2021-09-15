@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     string world_name (argv[1]);
     cout << "setting world to: " << world_name << "... " << flush;
 
-    Connection connection = Connection::connect_remote("127.0.0.1", 4000);
+    Connection connection = Connection::connect_remote("127.0.0.1", Vr_service::port());
     Message message;
     message.command = "set_world";
     message.content = world_name;

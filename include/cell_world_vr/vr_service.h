@@ -3,6 +3,8 @@
 #include <easy_tcp.h>
 #include <fstream>
 #include <cell_world_vr/state.h>
+#include <cell_world_vr/message.h>
+
 
 namespace cell_world::vr {
     struct Vr_service : easy_tcp::Service {
@@ -19,7 +21,7 @@ namespace cell_world::vr {
 
         Cell get_cell(Location l);
         void on_connect() override;
-        void create_new_log_file(const std::string &);
+        void create_new_log_file(int);
         void close_log_file();
 
         void on_incoming_data(const std::string &plugin_data) override;
@@ -38,10 +40,14 @@ namespace cell_world::vr {
         static bool set_view_angle(double);
         static bool update_spawn_locations();
         static bool set_ghost_min_distance(unsigned int);
-
+        static bool set_show_visibility(bool);
+        static bool set_incognito_mode(bool);
+        static bool set_participant_name(const std::string &);
+        static bool set_spawn_cell();
+        static bool send_update(const Message &);
+        static int port();
     private:
         Predator_instruction predator_instruction;
-        std::string participant_id;
         std::string file_name;
         Cell_group visibility_cone;
         unsigned int record_count = 0;

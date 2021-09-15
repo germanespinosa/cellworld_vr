@@ -87,6 +87,14 @@ target_link_libraries( hide_visibility PUBLIC cellworld_vr )
 add_executable(set_view_angle src/console/set_view_angle.cpp)
 target_link_libraries( set_view_angle PUBLIC cellworld_vr )
 
+add_executable(set_min_ghost_distance src/console/set_min_ghost_distance.cpp)
+target_link_libraries( set_min_ghost_distance PUBLIC cellworld_vr )
+
+add_executable(set_incognito_mode src/console/set_incognito_mode.cpp)
+target_link_libraries( set_incognito_mode PUBLIC cellworld_vr )
+
+add_executable(set_participant_name src/console/set_participant_name.cpp)
+target_link_libraries( set_participant_name PUBLIC cellworld_vr )
 
 ###
 ### TESTS

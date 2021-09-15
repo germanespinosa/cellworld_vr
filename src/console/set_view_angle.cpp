@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     string view_angle (argv[1]);
     cout << "setting ghost view angle to: " << view_angle << "... " << flush;
 
-    Connection connection = Connection::connect_remote("127.0.0.1", 4000);
+    Connection connection = Connection::connect_remote("127.0.0.1", Vr_service::port());
     Message message;
     message.command = "set_view_angle";
     message.content = view_angle;

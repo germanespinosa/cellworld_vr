@@ -16,8 +16,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     cout << "hiding visibility markers... " << flush;
-
-    Connection connection = Connection::connect_remote("127.0.0.1", 4000);
+    Connection connection = Connection::connect_remote("127.0.0.1", Vr_service::port());
     Message message;
     message.command = "hide_visibility";
     string msg_string;

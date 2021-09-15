@@ -12,16 +12,16 @@ int main(int argc, char *argv[])
 {
     if (argc != 2) {
         cout << "Wrong parameters." << endl;
-        cout << "Usage: ./set_speed [Speed]" << endl;
+        cout << "Usage: ./set_incognito_mode [0-1]" << endl;
         exit(1);
     }
-    string speed (argv[1]);
-    cout << "setting ghost speed to: " << speed << "... " << flush;
+    string incognito_mode (argv[1]);
+    cout << "setting incognito mode to: " << incognito_mode << "... " << flush;
 
     Connection connection = Connection::connect_remote("127.0.0.1", Vr_service::port());
     Message message;
-    message.command = "set_speed";
-    message.content = speed;
+    message.command = "set_incognito_mode";
+    message.content = incognito_mode;
     string msg_string;
     msg_string << message;
     connection.send_data(msg_string.c_str(), msg_string.size() + 1);
