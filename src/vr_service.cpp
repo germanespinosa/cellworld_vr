@@ -90,22 +90,21 @@ namespace cell_world::vr {
             }
             if (prey_cell != predator_cell) {
                 auto move = data->paths.get_move(state.predator.cell,data->cells[predator_instruction.destination]);
-                auto destination_coordinates = state.predator.cell.coordinates + move;
-                predator_instruction.next_step = data->map[destination_coordinates].id;
+                auto next_step_coordinates = state.predator.cell.coordinates + move;
+                predator_instruction.next_step = data->map[next_step_coordinates].id;
             } else {
                 predator_instruction.next_step = predator_cell.id;
             }
         } else { //incognito mode
             predator_instruction.contact = false; // ghost can't see the player
             if (predator_instruction.destination == Cell::ghost_cell().id || predator_instruction.destination == state.predator.cell.id) {
-                auto inverted_visibility = data->cells.free_cells() - visibility_cone;
-                predator_instruction.destination = inverted_visibility.random_cell().id;
+                predator_instruction.destination = data->cells.free_cells().random_cell().id;
             }
             auto move = data->paths.get_move(state.predator.cell,data->cells[predator_instruction.destination]);
-            auto destination_coordinates = state.predator.cell.coordinates + move;
-            predator_instruction.next_step = data->map[destination_coordinates].id;
+            auto next_step_coordinates = state.predator.cell.coordinates + move;
+            predator_instruction.next_step = data->map[next_step_coordinates].id;
         }
-        return !incognito_mode && (prey_cell != state.prey.cell || predator_cell != state.predator.cell);
+        return (prey_cell != state.prey.cell || predator_cell != state.predator.cell);
     }
 
     void Vr_service::on_connect()  {
@@ -193,9 +192,11 @@ namespace cell_world::vr {
             log_file << state << endl;
             if (changes) {
                 if (state.predator.cell == state.prey.cell) {
-                    response.command = "set_prey_caught";
-                    response.content = "";
-                    send_data(response.to_json());
+                    if (!incognito_mode) {
+                        response.command = "set_prey_caught";
+                        response.content = "";
+                        send_data(response.to_json());
+                    }
                 } else {
                     response.command = "set_destination_cell";
                     cout << predator_instruction << endl;
