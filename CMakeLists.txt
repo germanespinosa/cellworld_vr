@@ -9,7 +9,6 @@ project( cellworld_vr
 
 find_package(Cellworld_tools REQUIRED)
 find_package(Easy-tcp REQUIRED)
-find_package(date REQUIRED)
 find_package(Threads)
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread")
