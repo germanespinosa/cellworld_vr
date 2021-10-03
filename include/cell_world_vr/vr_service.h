@@ -3,7 +3,7 @@
 #include <easy_tcp.h>
 #include <fstream>
 #include <cell_world_vr/state.h>
-#include <cell_world_vr/message.h>
+#include <cell_world_tools/message.h>
 
 
 namespace cell_world::vr {

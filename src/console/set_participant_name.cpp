@@ -1,5 +1,6 @@
 #include <iostream>
-#include <cell_world_vr.h>
+#include <cell_world_vr/vr_service.h>
+#include <cell_world_tools.h>
 #include <easy_tcp.h>
 
 using namespace std;
