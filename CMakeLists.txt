@@ -71,11 +71,17 @@ target_link_libraries( cellworld_convert PUBLIC cellworld_vr )
 add_executable(set_world src/console/set_world.cpp)
 target_link_libraries( set_world PUBLIC cellworld_vr )
 
-add_executable(set_speed src/console/set_speed.cpp)
-target_link_libraries( set_speed PUBLIC cellworld_vr )
+add_executable(get_participants src/console/get_participants.cpp)
+target_link_libraries( get_participants PUBLIC cellworld_vr )
 
 add_executable(new_experiment src/console/new_experiment.cpp)
 target_link_libraries( new_experiment PUBLIC cellworld_vr )
+
+add_executable(start_training src/console/start_training.cpp)
+target_link_libraries( start_training PUBLIC cellworld_vr )
+
+add_executable(stop_training src/console/stop_training.cpp)
+target_link_libraries( stop_training PUBLIC cellworld_vr )
 
 add_executable(show_visibility src/console/show_visibility.cpp)
 target_link_libraries( show_visibility PUBLIC cellworld_vr )

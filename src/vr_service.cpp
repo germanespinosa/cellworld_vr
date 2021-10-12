@@ -7,13 +7,6 @@ using namespace std;
 
 namespace cell_world::vr {
 
-    struct Occlusions : Json_object {
-        Json_object_members(
-                Add_member(OcclusionIds);
-                );
-        Json_vector<unsigned int> OcclusionIds;
-    };
-
     struct Data{
         Data (const std::string &world_name):
         world(Json_create<World>(Web_resource::from("world").key(world_name).get())),
@@ -29,19 +22,26 @@ namespace cell_world::vr {
         Paths paths;
     };
 
+    Mode mode = Mode::in_experiment;
+    Json_vector<Participant> participants;
+    Training training;
+
     Data *data = new Data("hexa_10_00_vr");
-    double speed = 100;
+
     string destination_folder;
     string experiment_name;
+    Participant *participant;
+
     bool show_visibility = false;
     double view_angle = 145 * 2 * M_PI / 360;
     unsigned int min_ghost_distance = 5;
+
     Cell_group spawn_locations;
     bool incognito_mode = false;
-    string participant_name;
-    vector<string> participant_names;
-    vector<int> participant_ids;
+    int current_participant = Not_found;
     Vr_service *receiving_updates;
+    string participant_name;
+    bool caught = false;
 
     Cell Vr_service::get_cell(Location l){
         double min_dis=l.dist(data->cells[0].location);
@@ -119,36 +119,34 @@ namespace cell_world::vr {
         return buf;
     }
 
-    string get_participant(int id){
-        if (!participant_name.empty()){
-            string participant = participant_name;
-            participant_name = "";
-            for (unsigned int i=0;i<participant_ids.size();i++){
-                if (participant_ids[i]==id) {
-                    participant_names[i] = participant;
-                    return participant;
-                }
+    void set_participant(int id){
+        current_participant = Not_found;
+        for (unsigned int i=0;i<participants.size();i++){
+            if (participants[i].id==id) {
+                current_participant = i;
             }
-            participant_ids.push_back(id);
-            participant_names.push_back(participant);
-            return participant;
-        } else {
-            for (unsigned int i=0;i<participant_ids.size();i++){
-                if (participant_ids[i]==id) {
-                     return participant_names[i];
-                }
-            }
-            participant_ids.push_back(id);
-            string participant = json_cpp::Json_object_wrapper<int>(id).to_json();
-            participant_names.push_back(participant);
-            return participant;
         }
+        if (current_participant == Not_found) {
+            current_participant = participants.size();
+            participants.emplace_back(id);
+            participants[current_participant].name = "P" + json_cpp::Json_object_wrapper<int>(id).to_json();
+            participants[current_participant].speed = training.initial_speed;
+            participants[current_participant].fail = 0;
+            participants[current_participant].success = 0;
+            participants[current_participant].adjustment = training.initial_speed_adjustment;
+        }
+        if (!participant_name.empty()) {
+            participants[current_participant].name = participant_name;
+            participant_name = "";
+        }
+        participant = &participants[current_participant];
     }
 
     void Vr_service::create_new_log_file(int participant_id){
-        string participant = get_participant(participant_id);
-
-        string folder = destination_folder + "/"+ experiment_name + "/" + data->world.name + "/P" + participant;
+        caught = false;
+        set_participant(participant_id);
+        string participant_name = participant->name;
+        string folder = destination_folder + "/"+ experiment_name + "/" + data->world.name + "/" + participant_name;
         filesystem::create_directory(destination_folder);
         filesystem::create_directory(destination_folder + "/"+ experiment_name);
         filesystem::create_directory(destination_folder + "/"+ experiment_name + "/" + data->world.name);
@@ -175,14 +173,17 @@ namespace cell_world::vr {
             return; // ignores malformed messages
         }
         if (request.command == "start_episode") {
+            active = true;
             predator_instruction.destination = Cell::ghost_cell().id;
             predator_instruction.next_step = Cell::ghost_cell().id;
             predator_instruction.contact = false;
-            response.command = "set_speed";
-            response.content << Json_object_wrapper(speed);
-            send_data(response.to_json());
             create_new_log_file(atoi(request.content.c_str()));
+            response.command = "set_speed";
+            response.content << Json_object_wrapper(participant->speed);
+            send_data(response.to_json());
             record_count = 0;
+        }
+        if (request.command == "end_episode") {
         }
         if (request.command == "set_game_state"){
             State_vector game_state_vector;
@@ -196,6 +197,7 @@ namespace cell_world::vr {
                         response.command = "set_prey_caught";
                         response.content = "";
                         send_data(response.to_json());
+                        caught= true;
                     }
                 } else {
                     response.command = "set_destination_cell";
@@ -212,6 +214,7 @@ namespace cell_world::vr {
             response.content << data->world[cell_id];
             send_data(response.to_json());
         }
+
         if (request.command == "get_visibility"){
             response.command = "set_visibility";
             response.content << visibility_cone;
@@ -235,10 +238,37 @@ namespace cell_world::vr {
             }
             send_data(response.to_json());
         }
+
+        if (request.command == "get_participants"){
+            response.command = "set_participants";
+            response.content = participants.to_json();
+            send_data(response.to_json());
+        }
+
         if (request.command == "new_experiment"){
             response.command = "result";
             if (new_experiment()) {
                 response.content = "success: " + experiment_name;
+            }else{
+                response.content = "fail";
+            }
+            send_data(response.to_json());
+        }
+
+        if (request.command == "start_training"){
+            response.command = "result";
+            if (start_training()) {
+                response.content = "success";
+            }else{
+                response.content = "fail";
+            }
+            send_data(response.to_json());
+        }
+
+        if (request.command == "stop_training"){
+            response.command = "result";
+            if (stop_training()) {
+                response.content = "success" ;
             }else{
                 response.content = "fail";
             }
@@ -299,9 +329,9 @@ namespace cell_world::vr {
             send_data(response.to_json());
         }
 
-        if (request.command == "set_speed"){
+        if (request.command == "set_training"){
             response.command = "result";
-            if (set_speed(atof(request.content.c_str()))) {
+            if (set_training(request.content)) {
                 response.content = "success";
             } else {
                 response.content = "fail";
@@ -328,6 +358,25 @@ namespace cell_world::vr {
             receiving_updates = nullptr;
             cout << "Deregistering for updates" << endl;
         }
+        if (active){
+            if (mode == Mode::in_training) {
+                if (caught != participants[current_participant].last){
+                    participant->adjustment *= training.correction;
+                    participant->last = caught;
+                }
+                if (caught) {
+                    participant->speed -= participant->adjustment;
+                } else {
+                    participant->speed += participant->adjustment;
+                }
+            }
+            if (caught){
+                participant->fail++;
+            } else {
+                participant->success++;
+            }
+
+        }
         cout << "client disconnected "<< endl;
     }
 
@@ -348,19 +397,13 @@ namespace cell_world::vr {
         return send_update({"set_occlusions",occlusions.to_json()}) && update_spawn_locations() && set_spawn_cell();
     }
 
-    bool Vr_service::set_speed(double new_speed) {
-        if (new_speed <= 0) return false;
-        speed = new_speed;
-        return send_update({"set_speed", std::to_string(speed)});
-    }
-
     bool Vr_service::set_view_angle(double new_view_angle) {
         if (view_angle <= 0) return false;
         view_angle = new_view_angle;
         return true;
     }
 
-    bool  Vr_service::set_destination_folder(const std::string &folder) {
+    bool Vr_service::set_destination_folder(const std::string &folder) {
         destination_folder = folder;
         return true;
     }
@@ -372,6 +415,8 @@ namespace cell_world::vr {
     }
 
     bool Vr_service::new_experiment() {
+        mode = Mode::in_experiment;
+        participants.clear();
         return set_experiment(format_time("%Y%m%d_%H%M"));
     }
 
@@ -419,4 +464,25 @@ namespace cell_world::vr {
         return send_update({"set_spawn_cell", std::to_string(spawn_cell_id)});
     }
 
+    bool Vr_service::set_training(const string &new_training) {
+        try {
+            new_training >> training;
+            return true;
+        }
+        catch (...) {
+            return false;
+        }
+    }
+
+    bool Vr_service::start_training() {
+        if (mode == Mode::in_training) return false;
+        mode = Mode::in_training;
+        return true;
+    }
+
+    bool Vr_service::stop_training() {
+        if (mode == Mode::in_experiment) return false;
+        mode = Mode::in_experiment;
+        return true;
+    }
 }

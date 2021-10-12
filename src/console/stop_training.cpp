@@ -10,19 +10,16 @@ using namespace easy_tcp;
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    if (argc != 1) {
         cout << "Wrong parameters." << endl;
-        cout << "Usage: ./set_world [World_name]" << endl;
+        cout << "Usage: ./stop_training" << endl;
         exit(1);
     }
-    string world_name (argv[1]);
-    world_name = "hexa_" + world_name + "_vr";
-    cout << "setting world to: " << world_name << "... " << flush;
+    cout << "stop training... " << flush;
 
     Connection connection = Connection::connect_remote("127.0.0.1", Vr_service::port());
     Message message;
-    message.command = "set_world";
-    message.content = world_name;
+    message.command = "stop_training";
     string msg_string;
     msg_string << message;
     connection.send_data(msg_string.c_str(), msg_string.size() + 1);

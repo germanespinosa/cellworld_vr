@@ -11,18 +11,16 @@ using namespace easy_tcp;
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    if (argc != 1) {
         cout << "Wrong parameters." << endl;
-        cout << "Usage: ./set_speed [Speed]" << endl;
+        cout << "Usage: ./get_participants" << endl;
         exit(1);
     }
-    string speed (argv[1]);
-    cout << "setting ghost speed to: " << speed << "... " << flush;
+    cout << "getting participants info ... " << endl;
 
     Connection connection = Connection::connect_remote("127.0.0.1", Vr_service::port());
     Message message;
-    message.command = "set_speed";
-    message.content = speed;
+    message.command = "get_participants";
     string msg_string;
     msg_string << message;
     connection.send_data(msg_string.c_str(), msg_string.size() + 1);
