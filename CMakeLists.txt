@@ -83,6 +83,12 @@ target_link_libraries( start_training PUBLIC cellworld_vr )
 add_executable(stop_training src/console/stop_training.cpp)
 target_link_libraries( stop_training PUBLIC cellworld_vr )
 
+add_executable(set_speed src/console/set_speed.cpp)
+target_link_libraries( set_speed PUBLIC cellworld_vr )
+
+add_executable(set_turning_speed src/console/set_turning_speed.cpp)
+target_link_libraries( set_turning_speed PUBLIC cellworld_vr )
+
 add_executable(show_visibility src/console/show_visibility.cpp)
 target_link_libraries( show_visibility PUBLIC cellworld_vr )
 

@@ -20,6 +20,16 @@ namespace cell_world::vr {
         json_cpp::Json_vector<unsigned int> OcclusionIds;
     };
 
+    struct Speed_change : json_cpp::Json_object{
+        Speed_change() = default;
+        Json_object_members(
+                Add_member(participant_id);
+                Add_member(change);
+        );
+        int participant_id;
+        double change;
+    };
+
     struct Training : json_cpp::Json_object{
         Training() = default;
         Json_object_members(
@@ -95,8 +105,10 @@ namespace cell_world::vr {
         static bool set_show_visibility(bool);
         static bool set_incognito_mode(bool);
         static bool set_participant_name(const std::string &);
+        static bool set_turning_speed(const std::string &);
         static bool start_training();
         static bool stop_training();
+        static bool set_speed(const std::string &);
 
         static bool set_spawn_cell();
         static bool send_update(const Message &);

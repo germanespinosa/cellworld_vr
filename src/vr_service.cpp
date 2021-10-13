@@ -34,7 +34,7 @@ namespace cell_world::vr {
 
     bool show_visibility = false;
     double view_angle = 145 * 2 * M_PI / 360;
-    unsigned int min_ghost_distance = 5;
+    unsigned int min_ghost_distance = 10;
 
     Cell_group spawn_locations;
     bool incognito_mode = false;
@@ -61,7 +61,9 @@ namespace cell_world::vr {
         auto start = data->map[{-20,0}];
         spawn_locations.clear();
         for (auto &cell : data->cells){
-            if (!cell.get().occluded && data->paths.get_steps(start,cell) >= (int)min_ghost_distance) {
+            auto c = cell.get().coordinates;
+            auto d = data->paths.get_steps(start,cell);
+            if (!cell.get().occluded &&  d >= (int)min_ghost_distance) {
                 spawn_locations.add(cell);
             }
         }
@@ -295,6 +297,26 @@ namespace cell_world::vr {
             send_data(response.to_json());
         }
 
+        if (request.command == "set_speed"){
+            response.command = "result";
+            if (set_speed(request.content)){
+                response.content = "success";
+            } else {
+                response.content = "fail";
+            }
+            send_data(response.to_json());
+        }
+
+        if (request.command == "set_turning_speed"){
+            response.command = "result";
+            if (set_turning_speed(request.content)){
+                response.content = "success";
+            } else {
+                response.content = "fail";
+            }
+            send_data(response.to_json());
+        }
+
         if (request.command == "hide_visibility"){
             response.command = "result";
             if (set_show_visibility(false)){
@@ -457,11 +479,18 @@ namespace cell_world::vr {
 
     bool Vr_service::set_spawn_cell() {
         unsigned int spawn_cell_id;
-        if (!spawn_locations.empty())
-            spawn_cell_id = spawn_locations.random_cell().id;
+        update_spawn_locations();
+        if (!spawn_locations.empty()) {
+            Cell sc = spawn_locations.random_cell();
+            spawn_cell_id = sc.id;
+        }
         else
             spawn_cell_id = data->cells.free_cells().random_cell().id;
-        return send_update({"set_spawn_cell", std::to_string(spawn_cell_id)});
+        Predator_instruction pi;
+        pi.destination = spawn_cell_id;
+        pi.next_step = spawn_cell_id;
+        pi.contact = false;
+        return send_update({"set_spawn_cell", std::to_string(spawn_cell_id)}) && send_update({"set_destination_cell", pi.to_json()});
     }
 
     bool Vr_service::set_training(const string &new_training) {
@@ -484,5 +513,33 @@ namespace cell_world::vr {
         if (mode == Mode::in_experiment) return false;
         mode = Mode::in_experiment;
         return true;
+    }
+
+    bool Vr_service::set_speed(const string &speed_change_s) {
+        Speed_change sc;
+        try {
+            speed_change_s >> sc;
+            if (sc.change<=0) return false;
+            if (sc.change>=2) return false;
+            for (auto &p:participants) {
+                if (sc.participant_id == Not_found || sc.participant_id == p.id){
+                    p.speed *= sc.change;
+                }
+            }
+            return true;
+        }catch(...) {
+            return false;
+        }
+    }
+
+    bool Vr_service::set_turning_speed(const string &speed_s) {
+        try {
+            double turning_speed = atof(speed_s.c_str());
+            if (turning_speed<=0) return false;
+            send_update({"set_turning_speed", speed_s});
+            return true;
+        } catch(...) {
+            return false;
+        }
     }
 }
